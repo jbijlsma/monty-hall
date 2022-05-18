@@ -5,7 +5,7 @@ import "./App.css";
 import { useEffect } from "react";
 
 function App() {
-  const game = useSelector((state) => state.game);
+  const game = useSelector((state) => state);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -50,7 +50,11 @@ function App() {
 
   let resultP = null;
   if (game.chosenStrategy) {
-    resultP = game.won ? <p>Great! You won!!</p> : <p>Sorry, you lost :(</p>;
+    resultP = game.playerWon ? (
+      <p>Great! You won!!</p>
+    ) : (
+      <p>Sorry, you lost :(</p>
+    );
   }
 
   return (

@@ -1,4 +1,4 @@
-import { createSlice, configureStore } from "@reduxjs/toolkit";
+import { createStore } from "redux";
 
 const didPlayerWin = (state) => {
   return (
@@ -42,7 +42,7 @@ const switchDoor = (state) => {
 
 const openRandomDoor = (state) => {
   const options = state.doors.filter(
-    (door) => !door.hasPrice && door !== state.chosenDoor
+    (door) => !door.hasPrice && door.id !== state.chosenDoor.id
   );
   const optionIndex = Math.floor(Math.random() * options.length);
   options[optionIndex].isOpen = true;
@@ -62,9 +62,52 @@ const reinit = (state) => {
   state.doors = doors;
 };
 
-const gameSlice = createSlice({
-  name: "game",
-  initialState: {
+export const actions = {
+  init: () => ({
+    type: "init",
+  }),
+  restart: () => ({
+    type: "restart",
+  }),
+  startAutoplay: () => ({
+    type: "startAutoplay",
+  }),
+  stopAutoplay: () => ({
+    type: "stopAutoplay",
+  }),
+  chooseDoor: (doorId) => ({
+    type: "chooseDoor",
+    doorId: doorId,
+  }),
+  stay: () => ({
+    type: "stay",
+  }),
+  switch: () => ({
+    type: "switch",
+  }),
+};
+
+const cloneState = (state) => {
+  const doors = state.doors.map((door) => ({ ...door }));
+  const stats = {
+    switch: {
+      ...state.stats["switch"],
+    },
+    stay: {
+      ...state.stats["stay"],
+    },
+  };
+
+  return {
+    ...state,
+    doors: doors,
+    chosenDoor: state.chosenDoor ? { ...state.chosenDoor } : null,
+    stats: stats,
+  };
+};
+
+const gameReducer = (
+  state = {
     gameNumber: 0,
     doors: [],
     chosenStrategy: null,
@@ -84,67 +127,88 @@ const gameSlice = createSlice({
       },
     },
   },
-  reducers: {
-    init(state) {
-      reinit(state);
-    },
-    restart(state) {
-      const chooseRandomDoor = (state) => {
-        const doors = state.doors;
-        const randomDoorIndex = Math.floor(Math.random() * doors.length);
-        const door = doors.find((door) => door.id === randomDoorIndex);
-        state.chosenDoor = door;
-      };
+  action
+) => {
+  if (action.type === actions.init().type) {
+    const clonedState = cloneState(state);
+    reinit(clonedState);
+    return clonedState;
+  }
 
-      reinit(state);
+  if (action.type === actions.restart().type) {
+    const clonedState = cloneState(state);
 
-      if (state.autoplayActive) {
-        chooseRandomDoor(state);
-        openRandomDoor(state);
+    const chooseRandomDoor = (state) => {
+      const doors = state.doors;
+      const randomDoorIndex = Math.floor(Math.random() * doors.length);
+      const door = doors.find((door) => door.id === randomDoorIndex);
+      state.chosenDoor = door;
+    };
 
-        const randomStrategy = Math.floor(Math.random() * 2);
-        if (randomStrategy === 0) {
-          state.chosenStrategy = "stay";
-          showResult(state);
-        } else {
-          state.chosenStrategy = "switch";
-          switchDoor(state);
-          showResult(state);
-        }
+    reinit(clonedState);
+
+    if (clonedState.autoplayActive) {
+      chooseRandomDoor(clonedState);
+      openRandomDoor(clonedState);
+
+      const randomStrategy = Math.floor(Math.random() * 2);
+      if (randomStrategy === 0) {
+        clonedState.chosenStrategy = "stay";
+        showResult(clonedState);
+      } else {
+        clonedState.chosenStrategy = "switch";
+        switchDoor(clonedState);
+        showResult(clonedState);
       }
+    }
 
-      state.gameNumber++;
-      state.chosenDoor = null;
-      state.chosenStrategy = null;
-    },
-    startAutoplay(state) {
-      state.autoplayActive = true;
-    },
-    stopAutoplay(state) {
-      state.autoplayActive = false;
-    },
-    chooseDoor(state, action) {
-      const doorId = action.payload;
-      const chosenDoor = state.doors.find((door) => door.id === doorId);
-      state.chosenDoor = chosenDoor;
-      openRandomDoor(state);
-    },
-    stay(state) {
-      state.chosenStrategy = "stay";
-      showResult(state);
-    },
-    switch(state) {
-      state.chosenStrategy = "switch";
-      switchDoor(state);
-      showResult(state);
-    },
-  },
-});
+    clonedState.gameNumber++;
+    clonedState.chosenDoor = null;
+    clonedState.chosenStrategy = null;
 
-export const actions = gameSlice.actions;
+    return clonedState;
+  }
 
-export const store = configureStore({
-  reducer: {
-    game: gameSlice.reducer,
-  },
-});
+  if (action.type === actions.startAutoplay().type) {
+    const clonedState = cloneState(state);
+    clonedState.autoplayActive = true;
+    return clonedState;
+  }
+
+  if (action.type === actions.stopAutoplay().type) {
+    const clonedState = cloneState(state);
+    clonedState.autoplayActive = false;
+    return clonedState;
+  }
+
+  if (action.type === actions.chooseDoor().type) {
+    const clonedState = cloneState(state);
+    const doorId = action.doorId;
+    const chosenDoor = state.doors.find((door) => door.id === doorId);
+    clonedState.chosenDoor = chosenDoor;
+    openRandomDoor(clonedState);
+
+    return clonedState;
+  }
+
+  if (action.type === actions.stay().type) {
+    const clonedState = cloneState(state);
+    clonedState.chosenStrategy = "stay";
+    showResult(clonedState);
+
+    return clonedState;
+  }
+
+  if (action.type === actions.switch().type) {
+    const clonedState = cloneState(state);
+    clonedState.chosenStrategy = "switch";
+    switchDoor(clonedState);
+    showResult(clonedState);
+
+    return clonedState;
+  }
+
+  return state;
+};
+
+export const store = createStore(gameReducer);
