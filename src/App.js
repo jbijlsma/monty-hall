@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
@@ -21,8 +21,7 @@ function App() {
     },
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const restart = useCallback(() => {
+  const initGame = () => {
     const doors = [];
 
     for (let i = 0; i < numberOfDoors; i++) {
@@ -31,6 +30,15 @@ function App() {
 
     const doorWithPriceIndex = Math.floor(Math.random() * numberOfDoors);
     doors[doorWithPriceIndex].hasPrice = true;
+
+    return doors;
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const restart = () => {
+    const doors = initGame();
+
+    console.log(game.autoplayActive);
 
     if (game.autoplayActive) {
       chooseRandomDoor(doors);
@@ -52,18 +60,29 @@ function App() {
         chosenStrategy: null,
       };
     });
-  });
+  };
 
   useEffect(() => {
     restart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     console.log("useEffect");
     if (game.autoplayActive) {
-      setTimeout(() => restart(), 10);
+      setTimeout(() => restart(), 0.1);
+    } else {
+      console.log("init game");
+      const doors = initGame();
+      setGame((prev) => {
+        return {
+          ...prev,
+          doors: doors,
+        };
+      });
     }
-  }, [game.autoplayActive, game.gameNumber, restart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.autoplayActive, game.gameNumber]);
 
   const startAutoplay = () => {
     setGame((prev) => {
@@ -75,6 +94,7 @@ function App() {
   };
 
   const stopAutoplay = () => {
+    console.log("stopAutoplay");
     setGame((prev) => {
       return {
         ...prev,
