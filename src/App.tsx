@@ -1,16 +1,12 @@
-import { useSelector, useDispatch } from "react-redux";
-
-import { actions } from "./store/index.js";
-import "./App.css";
 import { useEffect } from "react";
+import { useAppSelector, useAppDispatch } from "./hooks";
+
+import { actions } from "./store/index";
+import "./App.css";
 
 function App() {
-  const game = useSelector((state) => state.game);
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(actions.init());
-  }, [dispatch]);
+  const game = useAppSelector((state) => state.game);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (game.autoplayActive) {
@@ -24,7 +20,7 @@ function App() {
       classNames.push("chosen");
     }
 
-    let priceSpan = "";
+    let priceSpan: any = null;
     if (door.isOpen) {
       priceSpan = door.hasPrice ? <span>🍓</span> : <span>🐐</span>;
     }
@@ -50,7 +46,11 @@ function App() {
 
   let resultP = null;
   if (game.chosenStrategy) {
-    resultP = game.won ? <p>Great! You won!!</p> : <p>Sorry, you lost :(</p>;
+    resultP = game.playerWon ? (
+      <p>Great! You won!!</p>
+    ) : (
+      <p>Sorry, you lost :(</p>
+    );
   }
 
   return (
@@ -68,14 +68,14 @@ function App() {
       <div>
         <div>
           <p>
-            Switch games played: {game.stats["switch"].played}, won:{" "}
-            {game.stats["switch"].won} ({game.stats["switch"].percentageWon} %)
+            Switch games played: {game.stats.switch.played}, won:{" "}
+            {game.stats.switch.won} ({game.stats.switch.percentageWon} %)
           </p>
         </div>
         <div>
           <p>
-            Stay games played: {game.stats["stay"].played}, won:{" "}
-            {game.stats["stay"].won} ({game.stats["stay"].percentageWon} %)
+            Stay games played: {game.stats.stay.played}, won:{" "}
+            {game.stats.stay.won} ({game.stats.stay.percentageWon} %)
           </p>
         </div>
       </div>
