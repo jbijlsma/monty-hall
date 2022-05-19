@@ -1,4 +1,5 @@
 import { createSlice, configureStore } from "@reduxjs/toolkit";
+import { v4 as uuid } from "uuid";
 
 import { Door, Game, GameStrategy, StrategyStats } from "../models/game";
 
@@ -7,7 +8,6 @@ class _Game {
 
   constructor(game: Game) {
     this.game = game;
-    this.reinit();
   }
 
   public restart(): void {
@@ -24,19 +24,19 @@ class _Game {
     }
 
     this.game.gameNumber++;
-    this.game.chosenDoor = undefined;
+    this.game.chosenDoorId = undefined;
     this.game.chosenStrategy = null;
   }
 
-  public chooseDoor(doorId: number) {
-    this.game.chosenDoor = this.game.doors.find((door) => door.id === doorId);
+  public chooseDoor(chosenDoorId: string) {
+    this.game.chosenDoorId = chosenDoorId;
     this.openRandomDoor();
   }
 
   private didPlayerWin(): boolean {
     return (
       this.game.doors.findIndex(
-        (door) => door.id === this.game.chosenDoor!.id && door.hasPrice
+        (door) => door.id === this.game.chosenDoorId && door.hasPrice
       ) >= 0
     );
   }
@@ -65,6 +65,7 @@ class _Game {
   }
 
   public stay(): void {
+    console.log("stay");
     this.game.chosenStrategy = GameStrategy.stay;
     this.executeStrategy();
   }
@@ -84,38 +85,34 @@ class _Game {
 
   private switchDoor(): void {
     const options = this.game.doors.filter(
-      (door) => !door.isOpen && door.id !== this.game.chosenDoor!.id
+      (door) => !door.isOpen && door.id !== this.game.chosenDoorId
     );
     const randomOptionIndex = Math.floor(Math.random() * options.length);
-    this.game.chosenDoor = options[randomOptionIndex];
+    this.game.chosenDoorId = options[randomOptionIndex].id;
   }
 
   private chooseRandomDoor() {
     const doors = this.game.doors;
     const randomDoorIndex = Math.floor(Math.random() * doors.length);
-    this.game.chosenDoor = doors[randomDoorIndex];
+    this.game.chosenDoorId = doors[randomDoorIndex].id;
   }
 
   private openRandomDoor() {
     const options = this.game.doors.filter(
-      (door) => !door.hasPrice && door !== this.game.chosenDoor
+      (door) => !door.hasPrice && door.id !== this.game.chosenDoorId
     );
     const optionIndex = Math.floor(Math.random() * options.length);
     options[optionIndex].isOpen = true;
   }
 
   private reinit(): void {
-    this.game.doors = [
-      this.createDoor(1),
-      this.createDoor(2),
-      this.createDoor(3),
-    ];
+    this.game.doors = [this.createDoor(), this.createDoor(), this.createDoor()];
     this.placePriceBehindRandomDoor();
   }
 
-  private createDoor(id: number): Door {
+  private createDoor(): Door {
     return {
-      id: id,
+      id: uuid(),
       isOpen: false,
       hasPrice: false,
     };
@@ -130,7 +127,7 @@ class _Game {
 const initialState = {
   doors: [],
   chosenStrategy: null,
-  chosenDoor: undefined,
+  chosenDoorId: undefined,
   playerWon: false,
   autoplayActive: false,
   stats: {
@@ -164,7 +161,7 @@ const gameSlice = createSlice({
       game.autoplayActive = false;
     },
     chooseDoor(game, action) {
-      const doorId = action.payload as number;
+      const doorId = action.payload as string;
       new _Game(game).chooseDoor(doorId);
     },
     stay(game) {

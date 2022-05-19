@@ -4,7 +4,7 @@ export enum GameStrategy {
 }
 
 export interface Door {
-  id: number;
+  id: string;
   isOpen: boolean;
   hasPrice: boolean;
 }
@@ -18,7 +18,7 @@ export interface StrategyStats {
 export interface Game {
   doors: Door[];
   chosenStrategy: GameStrategy | null;
-  chosenDoor: Door | undefined;
+  chosenDoorId: string | undefined;
   playerWon: boolean;
   autoplayActive: boolean;
   stats: {

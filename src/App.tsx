@@ -16,7 +16,7 @@ function App() {
 
   const doorElements = game.doors.map((door) => {
     let classNames = ["door-container"];
-    if (door.id === game.chosenDoor?.id) {
+    if (door.id === game.chosenDoorId) {
       classNames.push("chosen");
     }
 
@@ -37,7 +37,9 @@ function App() {
   });
 
   const stayOrSwitchButtons =
-    game.chosenDoor && !game.chosenStrategy && !game.autoplayActive ? (
+    game.chosenDoorId !== undefined &&
+    game.chosenStrategy === null &&
+    !game.autoplayActive ? (
       <div className="button-container">
         <button onClick={() => dispatch(actions.switch())}>Switch</button>
         <button onClick={() => dispatch(actions.stay())}>Stay</button>
@@ -45,12 +47,8 @@ function App() {
     ) : null;
 
   let resultP = null;
-  if (game.chosenStrategy) {
-    resultP = game.playerWon ? (
-      <p>Great! You won!!</p>
-    ) : (
-      <p>Sorry, you lost :(</p>
-    );
+  if (game.chosenStrategy !== null) {
+    resultP = game.playerWon ? <p>You won!</p> : <p>Sorry, you lost</p>;
   }
 
   return (
@@ -61,7 +59,7 @@ function App() {
       <div className="container">{stayOrSwitchButtons}</div>
       <div className="container">{resultP}</div>
       <div className="container">
-        {game.chosenStrategy && (
+        {game.chosenStrategy !== null && (
           <button onClick={() => dispatch(actions.restart())}>Restart</button>
         )}
       </div>
